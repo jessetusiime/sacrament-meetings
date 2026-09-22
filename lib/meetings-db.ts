@@ -31,9 +31,9 @@ export async function getMeetings(
     SELECT ${sql.unsafe(MEETING_COLUMNS)}
     FROM meetings
     WHERE
-      presiding       ILIKE ${searchTerm}
-      OR conducting   ILIKE ${searchTerm}
-      OR meeting_type ILIKE ${searchTerm}
+      presiding        ILIKE ${searchTerm}
+      OR conducting    ILIKE ${searchTerm}
+      OR meeting_type  ILIKE ${searchTerm}
       OR speakers::text ILIKE ${searchTerm}
     ORDER BY date DESC
     LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
@@ -48,9 +48,9 @@ export async function getMeetingsTotalPages(
   const rows = await sql`
     SELECT COUNT(*)::int AS count FROM meetings
     WHERE
-      presiding       ILIKE ${searchTerm}
-      OR conducting   ILIKE ${searchTerm}
-      OR meeting_type ILIKE ${searchTerm}
+      presiding        ILIKE ${searchTerm}
+      OR conducting    ILIKE ${searchTerm}
+      OR meeting_type  ILIKE ${searchTerm}
       OR speakers::text ILIKE ${searchTerm}
   `;
   const total = rows[0]?.count ?? 0;
@@ -72,26 +72,65 @@ export async function getMeetingsByDate(
 ): Promise<SacramentMeeting[]> {
   const rows = await sql`
     SELECT ${sql.unsafe(MEETING_COLUMNS)}
-    FROM meetings
-    WHERE date = ${date}
-    ORDER BY date DESC
+    FROM meetings WHERE date = ${date} ORDER BY date DESC
   `;
   return rows as unknown as SacramentMeeting[];
 }
 
-export async function addMeeting(
-  _data: Omit<SacramentMeeting, 'id'>
+export async function createMeeting(
+  data: Omit<SacramentMeeting, 'id'>
 ): Promise<SacramentMeeting> {
-  throw new Error('addMeeting: database implementation coming in Week 04');
+  const rows = await sql`
+    INSERT INTO meetings (
+      date, meeting_type, presiding, conducting, announcements,
+      opening_hymn, opening_prayer, ward_business, stake_business,
+      sacrament_hymn, speakers, closing_hymn, closing_prayer
+    ) VALUES (
+      ${data.date},
+      ${data.meetingType},
+      ${data.presiding},
+      ${data.conducting},
+      ${data.announcements ?? []},
+      ${JSON.stringify(data.openingHymn)}::jsonb,
+      ${data.openingPrayer},
+      ${JSON.stringify(data.wardBusiness ?? [])}::jsonb,
+      ${data.stakeBusiness},
+      ${JSON.stringify(data.sacramentHymn)}::jsonb,
+      ${JSON.stringify(data.speakers ?? [])}::jsonb,
+      ${JSON.stringify(data.closingHymn)}::jsonb,
+      ${data.closingPrayer}
+    )
+    RETURNING ${sql.unsafe(MEETING_COLUMNS)}
+  `;
+  return rows[0] as unknown as SacramentMeeting;
 }
 
 export async function updateMeeting(
-  _id: number,
-  _updates: Partial<SacramentMeeting>
+  id: number,
+  data: Omit<SacramentMeeting, 'id'>
 ): Promise<SacramentMeeting | null> {
-  throw new Error('updateMeeting: database implementation coming in Week 04');
+  const rows = await sql`
+    UPDATE meetings SET
+      date           = ${data.date},
+      meeting_type   = ${data.meetingType},
+      presiding      = ${data.presiding},
+      conducting     = ${data.conducting},
+      announcements  = ${data.announcements ?? []},
+      opening_hymn   = ${JSON.stringify(data.openingHymn)}::jsonb,
+      opening_prayer = ${data.openingPrayer},
+      ward_business  = ${JSON.stringify(data.wardBusiness ?? [])}::jsonb,
+      stake_business = ${data.stakeBusiness},
+      sacrament_hymn = ${JSON.stringify(data.sacramentHymn)}::jsonb,
+      speakers       = ${JSON.stringify(data.speakers ?? [])}::jsonb,
+      closing_hymn   = ${JSON.stringify(data.closingHymn)}::jsonb,
+      closing_prayer = ${data.closingPrayer}
+    WHERE id = ${id}
+    RETURNING ${sql.unsafe(MEETING_COLUMNS)}
+  `;
+  return (rows[0] as unknown as SacramentMeeting) ?? null;
 }
 
 export async function deleteMeeting(id: number): Promise<boolean> {
-  throw new Error('deleteMeeting: database implementation coming in Week 04');
+  const rows = await sql`DELETE FROM meetings WHERE id = ${id} RETURNING id`;
+  return rows.length > 0;
 }
