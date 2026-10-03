@@ -11,7 +11,7 @@ export default function MeetingCard({ meeting }: Props) {
 
   return (
     <div className="border rounded-lg p-4 shadow bg-white flex flex-col gap-3">
-      <Link href={`/meetings/${meeting.id}`} className="block">
+      <Link href={`/admin/meetings/${meeting.id}`} className="block">
         <h2 className="text-xl font-semibold text-blue-800">
           {new Date(meeting.date).toLocaleDateString('en-US', {
             weekday: 'long',

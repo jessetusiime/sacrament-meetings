@@ -24,7 +24,7 @@ export default async function MeetingsPage({ searchParams }: MeetingsPageProps) 
         <h1 className="text-2xl font-bold text-blue-900">All Meetings</h1>
         <MeetingSearch />
         <Link
-      href="/meetings/new"
+      href="/admin/meetings/new"
       className="whitespace-nowrap rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
     >
       + New Meeting

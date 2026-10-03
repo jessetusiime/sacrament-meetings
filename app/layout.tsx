@@ -8,8 +8,19 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
 
 export const metadata: Metadata = {
-  title: 'Sacrament Meeting Planner',
-  description: 'Plan and view sacrament meeting agendas',
+  title: {
+    default: 'Sacrament Meeting Planner',
+    template: '%s | Sacrament Meeting Planner',
+  },
+  description:
+    'Plan, view, and print sacrament meeting agendas for the Cambridge Ward. Tools for bishoprics and members.',
+  metadataBase: new URL('https://sacrament-meetings-red-eight.vercel.app'),
+  openGraph: {
+    title: 'Sacrament Meeting Planner',
+    description:
+      'Plan, view, and print sacrament meeting agendas for the Cambridge Ward.',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({

@@ -9,6 +9,8 @@ import {
   deleteMeeting as dbDeleteMeeting,
 } from './meetings-db';
 import type { SacramentMeeting, SpeakerItem, WardBusinessItem } from './types';
+import { AuthError } from 'next-auth';
+import { signIn, auth } from '@/auth';
 
 const HymnSchema = z.object({
   number: z.coerce
@@ -51,6 +53,33 @@ export type State = {
   errors?: Record<string, string[] | undefined>;
   message?: string | null;
 };
+
+async function requireOwnerSession() {
+  const session = await auth();
+  if (!session?.user) {
+    throw new Error('Not authenticated');
+  }
+  return session;
+}
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData
+): Promise<string | undefined> {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid email or password.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+    throw error;
+  }
+}
 
 function parseFormData(formData: FormData) {
   const announcements = formData.getAll('announcements').map(String).filter(Boolean);
@@ -104,6 +133,7 @@ export async function createMeeting(
   prevState: State,
   formData: FormData
 ): Promise<State> {
+  await requireOwnerSession();
   const validated = MeetingFormSchema.safeParse(parseFormData(formData));
 
   if (!validated.success) {
@@ -131,6 +161,7 @@ export async function updateMeeting(
   prevState: State,
   formData: FormData
 ): Promise<State> {
+  await requireOwnerSession();
   const validated = MeetingFormSchema.safeParse(parseFormData(formData));
 
   if (!validated.success) {
@@ -161,6 +192,7 @@ export async function updateMeeting(
 }
 
 export async function deleteMeeting(id: number): Promise<void> {
+  await requireOwnerSession();
   try {
     await dbDeleteMeeting(id);
   } catch (error) {
