@@ -3,9 +3,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { authConfig } from './auth.config';
-
-const OWNER_EMAIL = process.env.OWNER_EMAIL ?? '';
-const OWNER_PASSWORD_HASH = process.env.OWNER_PASSWORD_HASH ?? '';
+import { getUserByEmail } from './lib/users-db';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -23,20 +21,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const { email, password } = parsed.data;
 
-        if (email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
-          return null;
-        }
+        const user = await getUserByEmail(email);
+        if (!user) return null;
 
         const passwordMatches = await bcrypt.compare(
           password,
-          OWNER_PASSWORD_HASH
+          user.password_hash
         );
         if (!passwordMatches) return null;
 
         return {
-          id: 'owner',
-          email: OWNER_EMAIL,
-          name: 'Bishopric Admin',
+          id: String(user.id),
+          email: user.email,
+          name: user.name,
         };
       },
     }),

@@ -5,21 +5,26 @@ export const authConfig = {
     signIn: '/login',
   },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isProtected = nextUrl.pathname.startsWith('/admin');
+  authorized({ auth, request: { nextUrl } }) {
+    const isLoggedIn = !!auth?.user;
+    const path = nextUrl.pathname;
 
-      if (isProtected) {
-        if (isLoggedIn) return true;
-        return false;
-      }
+    // Protect specific admin-only URLs
+    const isProtected =
+      path === '/meetings/new' ||
+      /^\/meetings\/[^/]+\/edit$/.test(path);
 
-      if (isLoggedIn && nextUrl.pathname === '/login') {
-        return Response.redirect(new URL('/admin/meetings/new', nextUrl));
-      }
+    if (isProtected) {
+      if (isLoggedIn) return true;
+      return false;
+    }
 
-      return true;
-    },
+    if (isLoggedIn && path === '/login') {
+      return Response.redirect(new URL('/meetings/new', nextUrl));
+    }
+
+    return true;
   },
+},
   providers: [],
 } satisfies NextAuthConfig;
